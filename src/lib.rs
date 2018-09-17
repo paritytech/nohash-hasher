@@ -22,12 +22,10 @@
 
 use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 
-pub type BuildIntHasher<T> =
-    BuildHasherDefault<IntHasher<T>>;
+pub type BuildIntHasher<T> = BuildHasherDefault<IntHasher<T>>;
 
 /// Type alias which links the `HashMap`'s key type to the `IntHasher`.
-pub type IntMap<K, V> =
-    std::collections::HashMap<K, V, BuildIntHasher<K>>;
+pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildIntHasher<K>>;
 
 /// An `IntHasher` is a *stateless* implementation of `Hasher` which does
 /// not actually hash at all. Using this hasher, one must ensure that it is
@@ -235,84 +233,56 @@ impl Hasher for IntHasher<isize> {
 
 #[cfg(test)]
 mod tests {
-    use std::hash::BuildHasher;
     use super::*;
 
     #[test]
-    fn u8() {
-        let mut h = BuildIntHasher::<u8>::default().build_hasher();
-        h.write_u8(42);
-        assert_eq!(42, h.finish())
-    }
+    fn ok() {
+        let mut h1 = IntHasher::<u8>::default();
+        h1.write_u8(42);
+        assert_eq!(42, h1.finish());
 
-    #[test]
-    fn u16() {
-        let mut h = BuildIntHasher::<u16>::default().build_hasher();
-        h.write_u16(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h2 = IntHasher::<u16>::default();
+        h2.write_u16(42);
+        assert_eq!(42, h2.finish());
 
-    #[test]
-    fn u32() {
-        let mut h = BuildIntHasher::<u32>::default().build_hasher();
-        h.write_u32(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h3 = IntHasher::<u32>::default();
+        h3.write_u32(42);
+        assert_eq!(42, h3.finish());
 
-    #[test]
-    fn u64() {
-        let mut h = BuildIntHasher::<u64>::default().build_hasher();
-        h.write_u64(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h4 = IntHasher::<u64>::default();
+        h4.write_u64(42);
+        assert_eq!(42, h4.finish());
 
-    #[test]
-    fn usize() {
-        let mut h = BuildIntHasher::<usize>::default().build_hasher();
-        h.write_usize(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h5 = IntHasher::<usize>::default();
+        h5.write_usize(42);
+        assert_eq!(42, h5.finish());
 
-    #[test]
-    fn i8() {
-        let mut h = BuildIntHasher::<i8>::default().build_hasher();
-        h.write_i8(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h6 = IntHasher::<i8>::default();
+        h6.write_i8(42);
+        assert_eq!(42, h6.finish());
 
-    #[test]
-    fn i16() {
-        let mut h = BuildIntHasher::<i16>::default().build_hasher();
-        h.write_i16(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h7 = IntHasher::<i16>::default();
+        h7.write_i16(42);
+        assert_eq!(42, h7.finish());
 
-    #[test]
-    fn i32() {
-        let mut h = BuildIntHasher::<i32>::default().build_hasher();
-        h.write_i32(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h8 = IntHasher::<i32>::default();
+        h8.write_i32(42);
+        assert_eq!(42, h8.finish());
 
-    #[test]
-    fn i64() {
-        let mut h = BuildIntHasher::<i64>::default().build_hasher();
-        h.write_i64(42);
-        assert_eq!(42, h.finish())
-    }
+        let mut h9 = IntHasher::<i64>::default();
+        h9.write_i64(42);
+        assert_eq!(42, h9.finish());
 
-    #[test]
-    fn isize() {
-        let mut h = BuildIntHasher::<isize>::default().build_hasher();
-        h.write_isize(42);
-        assert_eq!(42, h.finish())
+        let mut h10 = IntHasher::<isize>::default();
+        h10.write_isize(42);
+        assert_eq!(42, h10.finish())
     }
 
     #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
-    fn u8_panic() {
-        let mut h = BuildIntHasher::<u8>::default().build_hasher();
+    fn u8_double_usage() {
+        let mut h = IntHasher::<u8>::default();
         h.write_u8(42);
         h.write_u8(43);
     }
@@ -320,8 +290,8 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
-    fn u16_panic() {
-        let mut h = BuildIntHasher::<u16>::default().build_hasher();
+    fn u16_double_usage() {
+        let mut h = IntHasher::<u16>::default();
         h.write_u16(42);
         h.write_u16(43);
     }
@@ -329,8 +299,8 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
-    fn u32_panic() {
-        let mut h = BuildIntHasher::<u32>::default().build_hasher();
+    fn u32_double_usage() {
+        let mut h = IntHasher::<u32>::default();
         h.write_u32(42);
         h.write_u32(43);
     }
@@ -338,8 +308,8 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
-    fn u64_panic() {
-        let mut h = BuildIntHasher::<u64>::default().build_hasher();
+    fn u64_double_usage() {
+        let mut h = IntHasher::<u64>::default();
         h.write_u64(42);
         h.write_u64(43);
     }
@@ -347,9 +317,55 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
-    fn usize_panic() {
-        let mut h = BuildIntHasher::<usize>::default().build_hasher();
+    fn usize_double_usage() {
+        let mut h = IntHasher::<usize>::default();
         h.write_usize(42);
         h.write_usize(43);
     }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic]
+    fn i8_double_usage() {
+        let mut h = IntHasher::<i8>::default();
+        h.write_i8(42);
+        h.write_i8(43);
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic]
+    fn i16_double_usage() {
+        let mut h = IntHasher::<i16>::default();
+        h.write_i16(42);
+        h.write_i16(43);
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic]
+    fn i32_double_usage() {
+        let mut h = IntHasher::<i32>::default();
+        h.write_i32(42);
+        h.write_i32(43);
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic]
+    fn i64_double_usage() {
+        let mut h = IntHasher::<i64>::default();
+        h.write_i64(42);
+        h.write_i64(43);
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic]
+    fn isize_double_usage() {
+        let mut h = IntHasher::<isize>::default();
+        h.write_isize(42);
+        h.write_isize(43);
+    }
 }
+
