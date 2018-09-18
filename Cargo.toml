@@ -3,5 +3,6 @@ name = "nohash-hasher"
 version = "0.1.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 license = "MIT"
+description = "An implementation of `std::hash::Hasher` which does not hash at all."
 keywords = ["hash", "hasher", "hashmap"]
 
