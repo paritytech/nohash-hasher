@@ -22,6 +22,10 @@ use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 /// A `HashMap` with an integer domain, using `NoHashHasher` to perform no hashing at all.
 pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 
+/// A `HashSet` of integers, using `NoHashHasher` to perform no hashing at all.
+pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
+
+/// An alias for `BuildHasherDefault` for use with `NoHashHasher`.
 pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 
 /// A `NoHashHasher<T>` where `T` is one of
