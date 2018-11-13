@@ -1,8 +1,10 @@
 [package]
 name = "nohash-hasher"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Parity Technologies <admin@parity.io>"]
-license = "MIT"
+license = "Apache-2.0 OR MIT"
 description = "An implementation of `std::hash::Hasher` which does not hash at all."
-keywords = ["hash", "hasher", "hashmap"]
+repository = "https://github.com/paritytech/nohash-hasher"
+readme = "README.md"
+keywords = ["hash", "hasher", "hashmap", "hashset"]
 
