@@ -14,6 +14,10 @@ use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 
 /// A `HashSet` of integers, using `NoHashHasher` to perform no hashing at all.
+/// Example hashmap over u8 keys
+/// ```
+/// let m: IntMap<u8, bool> = IntMap::default();
+/// ```
 pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
 
 /// An alias for `BuildHasherDefault` for use with `NoHashHasher`.
@@ -30,6 +34,10 @@ pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 /// i.e. a *single* call to `write_*` must be followed by `finish`. Multiple
 /// write-calls will cause errors (debug builds check this and panic if a violation
 /// of this API contract is detected).
+/// Example usage of BuildNoHashHasher with the standard hashmap
+/// ```
+/// let m: HashMap::<u8, bool, BuildNoHashHasher<u8>> = HashMap::with_hasher(BuildNoHashHasher::default());
+/// ```
 #[cfg(debug_assertions)]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct NoHashHasher<T>(u64, bool, PhantomData<T>);
