@@ -11,12 +11,58 @@
 use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 
 /// A `HashMap` with an integer domain, using `NoHashHasher` to perform no hashing at all.
+///
+/// # Examples
+///
+/// ```
+/// use nohash_hasher::IntMap;
+///
+/// let mut m: IntMap<u32, bool> = IntMap::default();
+///
+/// m.insert(0, false);
+/// m.insert(1, true);
+///
+/// assert!(m.contains_key(&0));
+/// assert!(m.contains_key(&1));
+/// ```
 pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 
 /// A `HashSet` of integers, using `NoHashHasher` to perform no hashing at all.
+///
+/// # Examples
+///
+/// ```
+/// use nohash_hasher::IntSet;
+///
+/// let mut m = IntSet::default();
+///
+/// m.insert(0u32);
+/// m.insert(1u32);
+///
+/// assert!(m.contains(&0));
+/// assert!(m.contains(&1));
+/// ```
 pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
 
 /// An alias for `BuildHasherDefault` for use with `NoHashHasher`.
+///
+/// # Examples
+///
+/// See also [`IntMap`] and [`IntSet`] for some easier usage examples.
+///
+/// ```
+/// use nohash_hasher::BuildNoHashHasher;
+/// use std::collections::HashMap;
+///
+/// let mut m: HashMap::<u8, char, BuildNoHashHasher<u8>> =
+///     HashMap::with_capacity_and_hasher(2, BuildNoHashHasher::default());
+///
+/// m.insert(0, 'a');
+/// m.insert(1, 'b');
+///
+/// assert_eq!(Some(&'a'), m.get(&0));
+/// assert_eq!(Some(&'b'), m.get(&1));
+/// ```
 pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 
 /// A `NoHashHasher<T>` where `T` is one of
@@ -30,6 +76,25 @@ pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 /// i.e. a *single* call to `write_*` must be followed by `finish`. Multiple
 /// write-calls will cause errors (debug builds check this and panic if a violation
 /// of this API contract is detected).
+///
+/// # Examples
+///
+/// See also [`BuildNoHashHasher`], [`IntMap`] and [`IntSet`] for some easier
+/// usage examples.
+///
+/// ```
+/// use nohash_hasher::NoHashHasher;
+/// use std::{collections::HashMap, hash::BuildHasherDefault};
+///
+/// let mut m: HashMap::<u8, char, BuildHasherDefault<NoHashHasher<u8>>> =
+///     HashMap::with_capacity_and_hasher(2, BuildHasherDefault::default());
+///
+/// m.insert(0, 'a');
+/// m.insert(1, 'b');
+///
+/// assert_eq!(Some(&'a'), m.get(&0));
+/// assert_eq!(Some(&'b'), m.get(&1));
+/// ```
 #[cfg(debug_assertions)]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct NoHashHasher<T>(u64, bool, PhantomData<T>);
