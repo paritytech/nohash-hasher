@@ -1,6 +1,6 @@
 [package]
 name = "nohash-hasher"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Parity Technologies <admin@parity.io>"]
 license = "Apache-2.0 OR MIT"
 description = "An implementation of `std::hash::Hasher` which does not hash at all."
