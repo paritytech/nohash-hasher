@@ -104,6 +104,7 @@ pub struct NoHashHasher<T>(u64, bool, PhantomData<T>);
 pub struct NoHashHasher<T>(u64, PhantomData<T>);
 
 impl Hasher for NoHashHasher<u8> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -117,12 +118,14 @@ impl Hasher for NoHashHasher<u8> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_u8(&mut self, n: u8) {
         self.0 = u64::from(n)
     }
 }
 
 impl Hasher for NoHashHasher<u16> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -136,12 +139,14 @@ impl Hasher for NoHashHasher<u16> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_u16(&mut self, n: u16) {
         self.0 = u64::from(n)
     }
 }
 
 impl Hasher for NoHashHasher<u32> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -155,12 +160,14 @@ impl Hasher for NoHashHasher<u32> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_u32(&mut self, n: u32) {
         self.0 = u64::from(n)
     }
 }
 
 impl Hasher for NoHashHasher<u64> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -174,12 +181,14 @@ impl Hasher for NoHashHasher<u64> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_u64(&mut self, n: u64) {
         self.0 = n
     }
 }
 
 impl Hasher for NoHashHasher<usize> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -193,12 +202,14 @@ impl Hasher for NoHashHasher<usize> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_usize(&mut self, n: usize) {
         self.0 = n as u64
     }
 }
 
 impl Hasher for NoHashHasher<i8> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -212,12 +223,14 @@ impl Hasher for NoHashHasher<i8> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_i8(&mut self, n: i8) {
         self.0 = n as u64
     }
 }
 
 impl Hasher for NoHashHasher<i16> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -231,12 +244,14 @@ impl Hasher for NoHashHasher<i16> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_i16(&mut self, n: i16) {
         self.0 = n as u64
     }
 }
 
 impl Hasher for NoHashHasher<i32> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -250,12 +265,14 @@ impl Hasher for NoHashHasher<i32> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_i32(&mut self, n: i32) {
         self.0 = n as u64
     }
 }
 
 impl Hasher for NoHashHasher<i64> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -269,12 +286,14 @@ impl Hasher for NoHashHasher<i64> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_i64(&mut self, n: i64) {
         self.0 = n as u64
     }
 }
 
 impl Hasher for NoHashHasher<isize> {
+    #[inline]
     fn finish(&self) -> u64 {
         self.0
     }
@@ -288,6 +307,7 @@ impl Hasher for NoHashHasher<isize> {
         self.1 = true
     }
     #[cfg(not(debug_assertions))]
+    #[inline]
     fn write_isize(&mut self, n: isize) {
         self.0 = n as u64
     }
