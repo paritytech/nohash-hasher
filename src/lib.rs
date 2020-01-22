@@ -8,7 +8,9 @@
 // at https://www.apache.org/licenses/LICENSE-2.0 and a copy of the MIT license
 // at https://opensource.org/licenses/MIT.
 
-use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use core::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 
 /// A `HashMap` with an integer domain, using `NoHashHasher` to perform no hashing at all.
 ///
@@ -25,6 +27,7 @@ use std::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 /// assert!(m.contains_key(&0));
 /// assert!(m.contains_key(&1));
 /// ```
+#[cfg(feature = "std")]
 pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 
 /// A `HashSet` of integers, using `NoHashHasher` to perform no hashing at all.
@@ -42,6 +45,7 @@ pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 /// assert!(m.contains(&0));
 /// assert!(m.contains(&1));
 /// ```
+#[cfg(feature = "std")]
 pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
 
 /// An alias for `BuildHasherDefault` for use with `NoHashHasher`.
