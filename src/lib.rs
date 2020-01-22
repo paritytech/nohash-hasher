@@ -10,9 +10,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-extern crate core;
-
 use core::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 
 /// A `HashMap` with an integer domain, using `NoHashHasher` to perform no hashing at all.
