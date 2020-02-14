@@ -13,6 +13,9 @@ i.e. a *single* call to `write_*` must be followed by `finish`. Multiple
 write-calls will cause errors (debug builds check this and panic if a violation
 of this API contract is detected).
 
+Besides the the built-in integers, custom types can be used with `NoHashHasher`
+too. See the `IsEnabled` trait for details.
+
 ## License
 
 Licensed under either of
