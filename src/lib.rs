@@ -1,4 +1,4 @@
-// Copyright 2018 Parity Technologies (UK) Ltd.
+// Copyright 2018-2020 Parity Technologies (UK) Ltd.
 //
 // Licensed under the Apache License, Version 2.0 or MIT license, at your option.
 //
@@ -10,11 +10,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
+use core::{fmt, hash::{BuildHasherDefault, Hasher}, marker::PhantomData};
 
 /// A `HashMap` with an integer domain, using `NoHashHasher` to perform no hashing at all.
 ///
 /// # Examples
+///
+/// See [`IsEnabled`] for use with custom types.
 ///
 /// ```
 /// use nohash_hasher::IntMap;
@@ -33,6 +35,8 @@ pub type IntMap<K, V> = std::collections::HashMap<K, V, BuildNoHashHasher<K>>;
 /// A `HashSet` of integers, using `NoHashHasher` to perform no hashing at all.
 ///
 /// # Examples
+///
+/// See [`IsEnabled`] for use with custom types.
 ///
 /// ```
 /// use nohash_hasher::IntSet;
@@ -69,22 +73,22 @@ pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
 /// ```
 pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 
-/// A `NoHashHasher<T>` where `T` is one of
-/// {`u8`, `u16`, `u32`, `u64`, `usize`, `i8`, `i16`, `i32`, `i64`, `isize`}
-/// is a *stateless* implementation of `Hasher` which does not actually hash at all.
-/// By itself this hasher is largely useless, but when used in `HashMap`s whose domain
-/// matches `T` the resulting map operations involving hashing are faster than
-/// with any other possible hashing algorithm.
+/// For an enabled type `T`, a `NoHashHasher<T>` implements `std::hash::Hasher` and
+/// uses the value set by one of the `write_{u8, u16, u32, u64, usize, i8, i16, i32,
+/// i64, isize}` methods as its hash output.
 ///
-/// Using this hasher, one must ensure that it is never used in a stateful way,
-/// i.e. a *single* call to `write_*` must be followed by `finish`. Multiple
-/// write-calls will cause errors (debug builds check this and panic if a violation
-/// of this API contract is detected).
+/// `NoHashHasher` does not implement any hashing algorithm and can only be used
+/// with types which can be mapped directly to a numeric value. Out of the box
+/// `NoHashHasher` is enabled for `u8`, `u16`, `u32`, `u64`, `usize`, `i8`, `i16`,
+/// `i32`, `i64`, and `isize`. Types that should be used with `NoHashHasher` need
+/// to implement [`IsEnabled`] and by doing so assert that their `Hash` impl invokes
+/// *only one* of the `Hasher::write_{u8, u16, u32, u64, usize, i8, i16, i32, i64,
+/// isize}` methods *exactly once*.
 ///
 /// # Examples
 ///
 /// See also [`BuildNoHashHasher`], [`IntMap`] and [`IntSet`] for some easier
-/// usage examples.
+/// usage examples. See [`IsEnabled`] for use with custom types.
 ///
 /// ```
 /// use nohash_hasher::NoHashHasher;
@@ -100,200 +104,186 @@ pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 /// assert_eq!(Some(&'b'), m.get(&1));
 /// ```
 #[cfg(debug_assertions)]
-#[derive(Copy, Clone, Debug, Default)]
 pub struct NoHashHasher<T>(u64, bool, PhantomData<T>);
 
 #[cfg(not(debug_assertions))]
-#[derive(Copy, Clone, Debug, Default)]
 pub struct NoHashHasher<T>(u64, PhantomData<T>);
 
-impl Hasher for NoHashHasher<u8> {
-    fn finish(&self) -> u64 {
-        self.0
+impl<T> fmt::Debug for NoHashHasher<T> {
+    #[cfg(debug_assertions)]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("NoHashHasher").field(&self.0).field(&self.1).finish()
     }
+
+    #[cfg(not(debug_assertions))]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("NoHashHasher").field(&self.0).finish()
+    }
+}
+
+impl<T> Default for NoHashHasher<T> {
+    #[cfg(debug_assertions)]
+    fn default() -> Self {
+        NoHashHasher(0, false, PhantomData)
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn default() -> Self {
+        NoHashHasher(0, PhantomData)
+    }
+}
+
+impl<T> Clone for NoHashHasher<T> {
+    #[cfg(debug_assertions)]
+    fn clone(&self) -> Self {
+        NoHashHasher(self.0, self.1, self.2)
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn clone(&self) -> Self {
+        NoHashHasher(self.0, self.1)
+    }
+}
+
+impl<T> Copy for NoHashHasher<T> {}
+
+/// Types which are safe to use with `NoHashHasher`.
+///
+/// This marker trait is an option for types to enable themselves for use
+/// with `NoHashHasher`. In order to be safe, the `Hash` impl needs to
+/// satisfy the following constraint:
+///
+/// > **One of the `Hasher::write_{u8,u16,u32,u64,usize,i8,i16,i32,i64,isize}`
+/// methods is invoked exactly once.**
+///
+/// The best way to ensure this is to write a custom `Hash` impl even when
+/// deriving `Hash` for a simple newtype of a single type which itself
+/// implements `IsEnabled` may work as well.
+///
+/// # Example
+///
+/// ```
+/// #[derive(PartialEq, Eq)]
+/// struct SomeType(u32);
+///
+/// impl std::hash::Hash for SomeType {
+///     fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
+///         hasher.write_u32(self.0)
+///     }
+/// }
+///
+/// impl nohash_hasher::IsEnabled for SomeType {}
+///
+/// let mut m = nohash_hasher::IntMap::default();
+///
+/// m.insert(SomeType(1), 't');
+/// m.insert(SomeType(0), 'f');
+///
+/// assert_eq!(Some(&'t'), m.get(&SomeType(1)));
+/// assert_eq!(Some(&'f'), m.get(&SomeType(0)));
+/// ```
+pub trait IsEnabled {}
+
+impl IsEnabled for u8 {}
+impl IsEnabled for u16 {}
+impl IsEnabled for u32 {}
+impl IsEnabled for u64 {}
+impl IsEnabled for usize {}
+impl IsEnabled for i8 {}
+impl IsEnabled for i16 {}
+impl IsEnabled for i32 {}
+impl IsEnabled for i64 {}
+impl IsEnabled for isize {}
+
+#[cfg(not(debug_assertions))]
+impl<T: IsEnabled> Hasher for NoHashHasher<T> {
     fn write(&mut self, _: &[u8]) {
         panic!("Invalid use of NoHashHasher")
     }
-    #[cfg(debug_assertions)]
+
+    fn write_u8(&mut self, n: u8)       { self.0 = u64::from(n) }
+    fn write_u16(&mut self, n: u16)     { self.0 = u64::from(n) }
+    fn write_u32(&mut self, n: u32)     { self.0 = u64::from(n) }
+    fn write_u64(&mut self, n: u64)     { self.0 = n }
+    fn write_usize(&mut self, n: usize) { self.0 = n as u64 }
+
+    fn write_i8(&mut self, n: i8)       { self.0 = n as u64 }
+    fn write_i16(&mut self, n: i16)     { self.0 = n as u64 }
+    fn write_i32(&mut self, n: i32)     { self.0 = n as u64 }
+    fn write_i64(&mut self, n: i64)     { self.0 = n as u64 }
+    fn write_isize(&mut self, n: isize) { self.0 = n as u64 }
+
+    fn finish(&self) -> u64 { self.0 }
+}
+
+#[cfg(debug_assertions)]
+impl<T: IsEnabled> Hasher for NoHashHasher<T> {
+    fn write(&mut self, _: &[u8]) {
+        panic!("Invalid use of NoHashHasher")
+    }
+
     fn write_u8(&mut self, n: u8) {
-        assert!(!self.1, "NoHashHasher::write_u8 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = u64::from(n);
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_u8(&mut self, n: u8) {
-        self.0 = u64::from(n)
-    }
-}
 
-impl Hasher for NoHashHasher<u16> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_u16(&mut self, n: u16) {
-        assert!(!self.1, "NoHashHasher::write_u16 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = u64::from(n);
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_u16(&mut self, n: u16) {
-        self.0 = u64::from(n)
-    }
-}
 
-impl Hasher for NoHashHasher<u32> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_u32(&mut self, n: u32) {
-        assert!(!self.1, "NoHashHasher::write_u32 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = u64::from(n);
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_u32(&mut self, n: u32) {
-        self.0 = u64::from(n)
-    }
-}
 
-impl Hasher for NoHashHasher<u64> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_u64(&mut self, n: u64) {
-        assert!(!self.1, "NoHashHasher::write_u64 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = n;
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_u64(&mut self, n: u64) {
-        self.0 = n
-    }
-}
 
-impl Hasher for NoHashHasher<usize> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_usize(&mut self, n: usize) {
-        assert!(!self.1, "NoHashHasher::write_usize must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = n as u64;
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_usize(&mut self, n: usize) {
-        self.0 = n as u64
-    }
-}
 
-impl Hasher for NoHashHasher<i8> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_i8(&mut self, n: i8) {
-        assert!(!self.1, "NoHashHasher::write_i8 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = n as u64;
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_i8(&mut self, n: i8) {
-        self.0 = n as u64
-    }
-}
 
-impl Hasher for NoHashHasher<i16> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_i16(&mut self, n: i16) {
-        assert!(!self.1, "NoHashHasher::write_i16 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = n as u64;
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_i16(&mut self, n: i16) {
-        self.0 = n as u64
-    }
-}
 
-impl Hasher for NoHashHasher<i32> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
     fn write_i32(&mut self, n: i32) {
-        assert!(!self.1, "NoHashHasher::write_i32 must be used only once.");
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
         self.0 = n as u64;
         self.1 = true
     }
-    #[cfg(not(debug_assertions))]
-    fn write_i32(&mut self, n: i32) {
-        self.0 = n as u64
-    }
-}
 
-impl Hasher for NoHashHasher<i64> {
+    fn write_i64(&mut self, n: i64) {
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
+        self.0 = n as u64;
+        self.1 = true
+    }
+
+    fn write_isize(&mut self, n: isize) {
+        assert!(!self.1, "NoHashHasher: second write attempt detected.");
+        self.0 = n as u64;
+        self.1 = true
+    }
+
     fn finish(&self) -> u64 {
         self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
-    fn write_i64(&mut self, n: i64) {
-        assert!(!self.1, "NoHashHasher::write_i64 must be used only once.");
-        self.0 = n as u64;
-        self.1 = true
-    }
-    #[cfg(not(debug_assertions))]
-    fn write_i64(&mut self, n: i64) {
-        self.0 = n as u64
-    }
-}
-
-impl Hasher for NoHashHasher<isize> {
-    fn finish(&self) -> u64 {
-        self.0
-    }
-    fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of NoHashHasher")
-    }
-    #[cfg(debug_assertions)]
-    fn write_isize(&mut self, n: isize) {
-        assert!(!self.1, "NoHashHasher::write_isize must be used only once.");
-        self.0 = n as u64;
-        self.1 = true
-    }
-    #[cfg(not(debug_assertions))]
-    fn write_isize(&mut self, n: isize) {
-        self.0 = n as u64
     }
 }
 
