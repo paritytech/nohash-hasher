@@ -73,21 +73,17 @@ pub type IntSet<T> = std::collections::HashSet<T, BuildNoHashHasher<T>>;
 /// ```
 pub type BuildNoHashHasher<T> = BuildHasherDefault<NoHashHasher<T>>;
 
-/// A `NoHashHasher<T>` where `T` is one of
-/// {`u8`, `u16`, `u32`, `u64`, `usize`, `i8`, `i16`, `i32`, `i64`, `isize`}
-/// is a *stateless* implementation of `Hasher` which does not actually hash at all.
+/// For an enabled type `T`, a `NoHashHasher<T>` implements `std::hash::Hasher` and
+/// uses the value set by one of the `write_{u8, u16, u32, u64, usize, i8, i16, i32,
+/// i64, isize}` methods as its hash output.
 ///
-/// By itself this hasher is largely useless, but when used in `HashMap`s whose domain
-/// matches `T` the resulting map operations involving hashing are faster than
-/// with any other possible hashing algorithm.
-///
-/// Using this hasher, one must ensure that it is never used in a stateful way,
-/// i.e. a *single* call to `write_*` must be followed by `finish`. Multiple
-/// write-calls will cause errors (debug builds check this and panic if a violation
-/// of this API contract is detected).
-///
-/// Besides the the built-in integers, custom types can be used with `NoHashHasher`
-/// too. See the [`IsEnabled`] trait for details.
+/// `NoHashHasher` does not implement any hashing algorithm and can only be used
+/// with types which can be mapped directly to a numeric value. Out of the box
+/// `NoHashHasher` is enabled for `u8`, `u16`, `u32`, `u64`, `usize`, `i8`, `i16`,
+/// `i32`, `i64`, and `isize`. Types that should be used with `NoHashHasher` need
+/// to implement [`IsEnabled`] and by doing so assert that their `Hash` impl invokes
+/// *only one* of the `Hasher::write_{u8, u16, u32, u64, usize, i8, i16, i32, i64,
+/// isize}` methods *exactly once*.
 ///
 /// # Examples
 ///
@@ -153,9 +149,9 @@ impl<T> Copy for NoHashHasher<T> {}
 
 /// Types which are safe to use with `NoHashHasher`.
 ///
-/// This marker trait is an option for types to enable themselves for
-/// use with `NoHashHasher`. In order to be safe, the `Hash` impl needs
-/// to satisfy the following constraint:
+/// This marker trait is an option for types to enable themselves for use
+/// with `NoHashHasher`. In order to be safe, the `Hash` impl needs to
+/// satisfy the following constraint:
 ///
 /// > **One of the `Hasher::write_{u8,u16,u32,u64,usize,i8,i16,i32,i64,isize}`
 /// methods is invoked exactly once.**
